@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+canvas {
+  display: block;
+  margin: 0 auto;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+img {
+  width: 300px;
+  max-height: 100%;
+}
+
+input {
+  width: 50px;
+  margin-left: 50px;
+}
+
+.wrapper {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px;
+}
