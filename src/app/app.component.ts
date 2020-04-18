@@ -2,6 +2,9 @@ import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/
 import {GridService} from "../services/grid.service";
 import {FormBuilder, FormGroup} from "@angular/forms";
 import {DrawerService, Point} from "../services/drawer.service";
+import {EuclidService} from "../services/euclid.service";
+import {AffineService} from "../services/affine.service";
+import {ProjectiveService} from "../services/projective.service";
 
 @Component({
   selector: 'app-root',
@@ -18,7 +21,10 @@ export class AppComponent implements AfterViewInit, OnInit {
   constructor(
     private gridService: GridService,
     private fb: FormBuilder,
-    private drawerService: DrawerService
+    private drawerService: DrawerService,
+    private euclidService: EuclidService,
+    private affineService: AffineService,
+    private projectiveService: ProjectiveService
   ) {
   }
 
@@ -43,14 +49,22 @@ export class AppComponent implements AfterViewInit, OnInit {
       circleRectangleHeight: ['5'],
       outerSmallCircleRadius: ['50'],
       outerBigCircleRadius: ['70'],
-      outerRectangleWidth: ['10']
+      outerRectangleWidth: ['10'],
+      rotationX: ['0'],
+      rotationY: ['0'],
+      angle: ['0'],
+      transformX: ['0'],
+      transformY: ['0'],
+      e1: ['1, 0, 0'],
+      e2: ['0, 1, 0']
     });
     this.parametersForm.valueChanges.subscribe(
       ({
          centerX, centerY, radiusInner,
          circleRectangleWidth, circleRectangleHeight,
          outerSmallCircleRadius, outerBigCircleRadius,
-         outerRectangleWidth
+         outerRectangleWidth, rotationX, rotationY,
+         angle, transformX, transformY, e1, e2
        }) => {
         centerX = +centerX;
         centerY = +centerY;
@@ -60,9 +74,16 @@ export class AppComponent implements AfterViewInit, OnInit {
         outerSmallCircleRadius = +outerSmallCircleRadius;
         outerBigCircleRadius = +outerBigCircleRadius;
         outerRectangleWidth = +outerRectangleWidth;
+        rotationX = +rotationX;
+        rotationY = +rotationY;
+        angle = +angle;
+        transformX = +transformX;
+        transformY = +transformY;
+        e1 = e1.split(',').map(val => +val);
+        e2 = e2.split(',').map(val => +val);
 
         this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
-        this.gridService.drawGrid(this.canvas.nativeElement, this.ctx);
+        this.gridService.drawGrid(this.canvas.nativeElement, this.ctx, e1, e2);
 
         // DETAIL
         const points: Point[] = [];
@@ -71,16 +92,55 @@ export class AppComponent implements AfterViewInit, OnInit {
         const startCircleAngle = Math.acos(circleRectangleWidth / radiusInner) * 180 / Math.PI;
         const circlePoints = this.drawerService.createCircle(radiusInner, 90 - startCircleAngle, 90);
         points.push(...circlePoints);
+        const innerDetailPoints = [];
+        const innerDetailBreakpoints = [];
+
+        innerDetailPoints.push({x: centerX, y: centerY - radiusInner - circleRectangleHeight});
+        points.forEach(({x, y}) => innerDetailPoints.push({
+          x: x + centerX, y: y + centerY
+        }));
+        innerDetailBreakpoints.push(innerDetailPoints.length);
+        innerDetailPoints.push({x: centerX, y: centerY - radiusInner - circleRectangleHeight});
+        points.forEach(({x, y}) => innerDetailPoints.push({
+          x: -x + centerX, y: y + centerY
+        }));
+        innerDetailBreakpoints.push(innerDetailPoints.length);
+        innerDetailPoints.push({x: centerX, y: centerY + radiusInner + circleRectangleHeight});
+        points.forEach(({x, y}) => innerDetailPoints.push({
+          x: x + centerX, y: -y + centerY
+        }));
+        innerDetailBreakpoints.push(innerDetailPoints.length)
+        innerDetailPoints.push({x: centerX, y: centerY + radiusInner + circleRectangleHeight});
+        points.forEach(({x, y}) => innerDetailPoints.push({
+          x: -x + centerX, y: -y + centerY
+        }));
 
 
-        this.ctx.moveTo(centerX, centerY - radiusInner - circleRectangleHeight);
-        points.forEach(({x, y}) => this.ctx.lineTo(x + centerX, y + centerY));
-        this.ctx.moveTo(centerX, centerY - radiusInner - circleRectangleHeight);
-        points.forEach(({x, y}) => this.ctx.lineTo(-x + centerX, y + centerY));
-        this.ctx.moveTo(centerX, centerY + radiusInner + circleRectangleHeight);
-        points.forEach(({x, y}) => this.ctx.lineTo(x + centerX, -y + centerY));
-        this.ctx.moveTo(centerX, centerY + radiusInner + circleRectangleHeight);
-        points.forEach(({x, y}) => this.ctx.lineTo(-x + centerX, -y + centerY));
+        let euclidTransformationsInner = this.euclidService.euclidTransformations(innerDetailPoints, {
+          x: rotationX + centerX,
+          y: rotationY + centerY,
+          angle: angle
+        }, {x: transformX, y: transformY});
+
+        if (e1.length === 3 && e2.length === 3) {
+          euclidTransformationsInner = euclidTransformationsInner.map(point => {
+            return this.affineService.transformation({e1: e1, e2: e2}, point)
+          });
+        } else if (e1.length === 4 && e2.length === 4) {
+          euclidTransformationsInner = euclidTransformationsInner.map(point => {
+            return this.projectiveService.transformation({e1: e1, e2: e2}, point)
+          });
+        }
+
+        this.ctx.moveTo(euclidTransformationsInner[0].x, euclidTransformationsInner[0].y);
+        euclidTransformationsInner.forEach((val, index) => {
+          if (innerDetailBreakpoints.includes(index)) {
+            this.ctx.moveTo(val.x, val.y);
+          } else {
+            this.ctx.lineTo(val.x, val.y);
+          }
+        });
+
 
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 2;
@@ -154,15 +214,54 @@ export class AppComponent implements AfterViewInit, OnInit {
           },
 
         ];
-        this.ctx.moveTo(centerX, centerY - outerSmallCircleRadius);
-        outerPoints.forEach(({x, y}) => this.ctx.lineTo(x + centerX, y + centerY));
-        this.ctx.moveTo(centerX, centerY - outerSmallCircleRadius);
-        outerPoints.forEach(({x, y}) => this.ctx.lineTo(-x + centerX, y + centerY));
-        this.ctx.moveTo(centerX, centerY + outerSmallCircleRadius);
-        outerPoints.forEach(({x, y}) => this.ctx.lineTo(x + centerX, -y + centerY));
-        this.ctx.moveTo(centerX, centerY + outerSmallCircleRadius);
-        outerPoints.forEach(({x, y}) => this.ctx.lineTo(-x + centerX, -y + centerY));
 
+
+        const outerDetailPoints = [];
+        const outerDetailBreakpoints = [];
+        outerDetailPoints.push({x: centerX, y: centerY - outerSmallCircleRadius});
+        outerPoints.forEach(({x, y}) => outerDetailPoints.push({
+          x: x + centerX, y: y + centerY
+        }));
+        outerDetailBreakpoints.push(outerDetailPoints.length);
+        outerDetailPoints.push({x: centerX, y: centerY - outerSmallCircleRadius});
+        outerPoints.forEach(({x, y}) => outerDetailPoints.push({
+          x: -x + centerX, y: y + centerY
+        }));
+        outerDetailBreakpoints.push(outerDetailPoints.length);
+        outerDetailPoints.push({x: centerX, y: centerY + outerSmallCircleRadius});
+        outerPoints.forEach(({x, y}) => outerDetailPoints.push({
+          x: x + centerX, y: -y + centerY
+        }));
+        outerDetailBreakpoints.push(outerDetailPoints.length);
+        outerDetailPoints.push({x: centerX, y: centerY + outerSmallCircleRadius});
+        outerPoints.forEach(({x, y}) => outerDetailPoints.push({
+          x: -x + centerX, y: -y + centerY
+        }));
+
+        let euclidTransformationsOuter = this.euclidService.euclidTransformations(outerDetailPoints, {
+          x: rotationX + centerX,
+          y: rotationY + centerY,
+          angle: angle
+        }, {x: transformX, y: transformY});
+
+        if (e1.length === 3 && e2.length === 3) {
+          euclidTransformationsOuter = euclidTransformationsOuter.map(point => {
+            return this.affineService.transformation({e1: e1, e2: e2}, point)
+          });
+        } else if (e1.length === 4 && e2.length === 4) {
+          euclidTransformationsOuter = euclidTransformationsOuter.map(point => {
+            return this.projectiveService.transformation({e1: e1, e2: e2}, point)
+          });
+        }
+
+        this.ctx.moveTo(euclidTransformationsOuter[0].x, euclidTransformationsOuter[0].y);
+        euclidTransformationsOuter.forEach((val, index) => {
+          if (outerDetailBreakpoints.includes(index)) {
+            this.ctx.moveTo(val.x, val.y);
+          } else {
+            this.ctx.lineTo(val.x, val.y);
+          }
+        });
 
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 2;

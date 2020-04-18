@@ -9,13 +9,13 @@ canvas {
 
 form {
   display: flex;
-  flex-direction: column;
 }
 
 label {
   display: flex;
   justify-content: space-between;
   margin-top: 10px;
+
   &:first-child {
     margin-top: 0;
   }
@@ -24,6 +24,7 @@ label {
 img {
   width: 300px;
   max-height: 100%;
+  align-self: center;
 }
 
 input {
@@ -31,8 +32,16 @@ input {
   margin-left: 50px;
 }
 
+.basis {
+  width: 100px;
+}
+
 .wrapper {
   display: flex;
   justify-content: space-around;
   margin: 20px;
+}
+
+.column {
+  margin-right: 20px;
 }
