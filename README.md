@@ -1,7 +1,7 @@
 # Graph
-
+![Image of Slot](https://github.com/AlexeyBatin/my-dream/blob/master/image.png)
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 9.0.3.
-
+### First you need to install all dependencies | `npm i`
 ## Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
