@@ -1,0 +1,77 @@
+<div class="wrapper">
+    <form [formGroup]="parametersForm">
+        <div class="column">
+            <label>
+                Center X
+                <input type="text" formControlName="centerX">
+            </label>
+            <label>
+                Center Y
+                <input type="text" formControlName="centerY">
+            </label>
+            <label>
+                R1
+                <input type="text" formControlName="radiusInner">
+            </label>
+            <label>
+                A
+                <input type="text" formControlName="circleRectangleWidth">
+            </label>
+            <label>
+                B
+                <input type="text" formControlName="circleRectangleHeight">
+            </label>
+
+            <label>
+                R2
+                <input type="text" formControlName="outerSmallCircleRadius">
+            </label>
+            <label>
+                R3
+                <input type="text" formControlName="outerBigCircleRadius">
+            </label>
+            <label>
+                C
+                <input type="text" formControlName="outerRectangleWidth">
+            </label>
+        </div>
+        <div class="column">
+            <label>
+                Rotation X
+                <input type="text" formControlName="rotationX">
+            </label>
+            <label>
+                Rotation Y
+                <input type="text" formControlName="rotationY">
+            </label>
+            <label>
+                Rotation Angle
+                <input type="text" formControlName="angle">
+            </label>
+            <label>
+                Transform X
+                <input type="text" formControlName="transformX">
+            </label>
+            <label>
+                Transform Y
+                <input type="text" formControlName="transformY">
+            </label>
+            <label>
+                Affine or Projective
+            </label>
+            <label>
+                E1(x,y,z[,w])
+                <input type="text" class="basis" formControlName="e1">
+            </label>
+            <label>
+                E2(x,y,z[,w])
+                <input type="text" class="basis" formControlName="e2">
+            </label>
+        </div>
+    </form>
+    <img src="assets/detail-super.png" alt="MY SUPER IMAGE">
+
+</div>
+
+
+<canvas #canvasElement></canvas>

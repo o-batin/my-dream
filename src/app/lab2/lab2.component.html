@@ -1,0 +1,31 @@
+<form [formGroup]="parametersForm">
+    <div class="column">
+        <p>Transform View</p>
+        <label>
+            Transform X
+            <input type="text" formControlName="transformX">
+        </label>
+        <label>
+            Transform Y
+            <input type="text" formControlName="transformY">
+        </label>
+    </div>
+    <div class="column">
+        <p>Affine or Projective</p>
+        <label>
+            E1(x,y,z[,w])
+            <input type="text" class="basis" formControlName="e1">
+        </label>
+        <label>
+            E2(x,y,z[,w])
+            <input type="text" class="basis" formControlName="e2">
+        </label>
+    </div>
+    <div class="column">
+        <button (click)="drawRooster()">Draw Rooster</button>
+        <button (click)="drawGoose()">Draw Goose</button>
+        <button (click)="transformRoosterToGoose()">Start transform</button>
+    </div>
+</form>
+
+<canvas #canvasElement></canvas>
