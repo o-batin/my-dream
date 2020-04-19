@@ -83,7 +83,7 @@ export class Lab2Component implements OnInit, AfterViewInit {
       });
     } else if (e1.length === 4 && e2.length === 4) {
       points = points.map(point => {
-        return this.affineService.transformation({e1: e1, e2: e2}, point)
+        return this.projectiveService.transformation({e1: e1, e2: e2}, point)
       });
     }
 
